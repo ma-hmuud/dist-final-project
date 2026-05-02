@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -9,6 +10,13 @@ import streamlit as st
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BASE_DIR / "models" / "best_demand_forecasting_model"
 METRICS_PATH = BASE_DIR / "outputs" / "model_metrics.csv"
+LOCAL_JDK_DIR = next((BASE_DIR / ".jdk").glob("jdk-21*"), None)
+
+
+def configure_java_for_spark() -> None:
+    if LOCAL_JDK_DIR and (LOCAL_JDK_DIR / "bin" / "java").exists():
+        os.environ["JAVA_HOME"] = str(LOCAL_JDK_DIR)
+        os.environ["PATH"] = f"{LOCAL_JDK_DIR / 'bin'}:{os.environ['PATH']}"
 
 
 st.set_page_config(
@@ -70,6 +78,8 @@ st.markdown(
 
 @st.cache_resource(show_spinner=False)
 def load_spark_model():
+    configure_java_for_spark()
+
     from pyspark.ml.pipeline import PipelineModel
     from pyspark.sql import SparkSession
 
